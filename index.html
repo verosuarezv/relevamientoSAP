@@ -87,13 +87,21 @@ input:focus, select:focus, textarea:focus, button:focus {
 .done h2 { margin-bottom:8px; }
 .otro-wrap { margin-top:8px; display:none; }
 .otro-wrap.open { display:block; }
+.attach-row { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+.attach-link {
+  flex:1; min-width:140px; text-align:center; padding:8px 10px; border-radius:7px;
+  border:1px solid var(--border); background: var(--bg); color: var(--text);
+  font-size:0.78rem; cursor:pointer; text-decoration:none; font-family:inherit;
+}
+.attach-link:hover { border-color: var(--accent); color: var(--accent); }
+.attach-hint { color: var(--muted); font-size:0.8rem; margin: 10px 0 2px; line-height:1.4; }
 </style>
 </head>
 <body>
 <div class="wrap" id="app">
 
   <h1>Relevamiento de Consultas y Reportes SAP por Sector</h1>
-  <p class="intro">Este relevamiento junta las consultas, layouts, comunicaciones e informes de Excel que usás hoy en SAP. Completá lo que corresponda en cada bloque — podés agregar tantos ítems como necesites, sin límite. Si tenés capturas de pantalla de layouts para mostrar, mandalas por mail aparte.</p>
+  <p class="intro">Este relevamiento junta las consultas, layouts, comunicaciones e informes de Excel que usás hoy en SAP. Completá lo que corresponda en cada bloque — podés agregar tantos ítems como necesites, sin límite.</p>
 
   <div class="card">
     <div class="field">
@@ -104,12 +112,22 @@ input:focus, select:focus, textarea:focus, button:focus {
       <label>Sector/Área</label>
       <select id="sector">
         <option value="">Seleccioná...</option>
-        <option>Finanzas/Proveedores</option>
+        <option>Business Intelligence</option>
+        <option>Calidad</option>
+        <option>Contabilidad</option>
+        <option>Comercial</option>
         <option>Compras</option>
         <option>Cuentas Corrientes</option>
-        <option>Comercial</option>
-        <option>Contabilidad</option>
-        <option value="__otro">Otro</option>
+        <option>Dirección</option>
+        <option>I+D</option>
+        <option>IT</option>
+        <option>Logística</option>
+        <option>Mantenimiento</option>
+        <option>Planificación</option>
+        <option>Producción</option>
+        <option>Proveedores/Pagos</option>
+        <option>RRHH</option>
+        <option value="__otro">Otra</option>
       </select>
       <div class="otro-wrap" id="otroWrap">
         <input type="text" id="otroTexto" placeholder="Especificá tu sector">
@@ -124,6 +142,7 @@ input:focus, select:focus, textarea:focus, button:focus {
   <div class="card" id="block-query">
     <div class="block-title">Consultas - Queries utilizadas</div>
     <div class="block-desc">Un renglón por cada consulta que uses en SAP.</div>
+    <div class="attach-hint">💡 Si querés adjuntar una captura o archivo a algún ítem, cada uno tiene botones para subirlo a Drive o avisarnos por mail.</div>
     <div class="gate">
       <button type="button" data-block="query" data-val="si">Sí, uso Queries</button>
       <button type="button" data-block="query" data-val="no" class="active">No uso</button>
@@ -186,6 +205,8 @@ input:focus, select:focus, textarea:focus, button:focus {
 
 <script>
 const FORM_ACTION = 'https://docs.google.com/forms/d/e/1FAIpQLSdf6mGnUF5Fk_nxhYvubB4VR9syR8dH1ESzwi-OPl2wB7SUaw/formResponse';
+const DRIVE_LINK = 'https://drive.google.com/drive/folders/1I3Wj0rxeOHvGb7_r6CF5_qPDaDdJA8Wan77gnTKDFE4GMLYBj29q_QLIV0VJ6oSN1II8g1Ij';
+const DEST_EMAIL = 'vpsuarez@gmail.com';
 const ENTRY = {
   usuario: 'entry.1710349789',
   sector: 'entry.96550867',
@@ -228,6 +249,10 @@ function renderBlock(blockKey) {
       const val = (entry[f.key] || '').replace(/</g,'&lt;');
       html += `<div class="field"><label>${f.label}</label><textarea data-entry="${entry.id}" data-field="${f.key}">${val}</textarea></div>`;
     });
+    html += `<div class="attach-row">
+      <a class="attach-link" href="${DRIVE_LINK}" target="_blank" rel="noopener">📎 Subir a Drive</a>
+      <button type="button" class="attach-link mail-link" data-entry="${entry.id}" data-block="${blockKey}">✉️ Avisar por mail</button>
+    </div>`;
     div.innerHTML = html;
     container.appendChild(div);
   });
@@ -244,6 +269,17 @@ function renderBlock(blockKey) {
       const id = btn.getAttribute('data-remove');
       state[blockKey].entries = state[blockKey].entries.filter(x => x.id !== id);
       renderBlock(blockKey);
+    });
+  });
+  container.querySelectorAll('.mail-link').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-entry');
+      const bKey = btn.getAttribute('data-block');
+      const entry = state[bKey].entries.find(x => x.id === id);
+      const usuario = (document.getElementById('usuario').value || 'Usuario').trim();
+      const referencia = (entry && entry.campo1 ? entry.campo1 : '').trim() || 'sin descripción';
+      const subject = encodeURIComponent(`Adjunto SAP - ${usuario} - ${referencia}`);
+      window.location.href = `mailto:${DEST_EMAIL}?subject=${subject}`;
     });
   });
 }
