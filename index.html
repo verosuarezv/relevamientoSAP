@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Relevamiento SAP por Sector</title>
+<style>
+:root {
+  --bg: #F5F4F1;
+  --card: #FFFFFF;
+  --text: #1B1F27;
+  --muted: #6B7280;
+  --accent: #2E5AAC;
+  --accent-ink: #FFFFFF;
+  --border: #DDDBD4;
+  --danger: #B3261E;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14171C; --card: #1D2127; --text: #E7E9EC; --muted: #9AA1AC;
+    --accent: #6E9AE8; --accent-ink: #0E1116; --border: #2B3038;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14171C; --card: #1D2127; --text: #E7E9EC; --muted: #9AA1AC;
+  --accent: #6E9AE8; --accent-ink: #0E1116; --border: #2B3038;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin:0; padding:0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+body {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.wrap { max-width: 640px; margin: 0 auto; padding: 32px 20px 80px; }
+h1 { font-size: 1.4rem; margin: 0 0 8px; line-height:1.3; }
+.intro { color: var(--muted); font-size: 0.92rem; line-height:1.5; margin-bottom: 26px; }
+.card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 20px; margin-bottom: 16px;
+}
+.field { margin-bottom: 16px; }
+.field:last-child { margin-bottom: 0; }
+label { display:block; font-weight:600; font-size:0.88rem; margin-bottom:6px; }
+.help { color: var(--muted); font-size:0.8rem; margin-top:4px; }
+input[type=text], select, textarea {
+  width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border);
+  background: var(--bg); color: var(--text); font-size:0.95rem; font-family:inherit;
+}
+textarea { min-height: 56px; resize: vertical; }
+input:focus, select:focus, textarea:focus, button:focus {
+  outline: 2px solid var(--accent); outline-offset: 1px;
+}
+.block-title { font-size:1.05rem; font-weight:700; margin:0 0 4px; line-height:1.35; }
+.block-desc { color: var(--muted); font-size:0.83rem; margin: 0 0 14px; line-height:1.45; }
+.gate { display:flex; gap:10px; margin-bottom: 4px; }
+.gate button {
+  flex:1; padding:10px; border-radius:8px; border:1px solid var(--border);
+  background: var(--card); color: var(--text); font-size:0.88rem; cursor:pointer;
+}
+.gate button.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.entries { margin-top: 16px; display:none; }
+.entries.open { display:block; }
+.entry {
+  border:1px solid var(--border); border-radius:8px; padding:14px 14px 8px; margin-bottom:12px; position:relative;
+}
+.entry .remove {
+  position:absolute; top:6px; right:8px; background:none; border:none; color: var(--muted);
+  font-size:1.2rem; cursor:pointer; line-height:1; padding:4px 6px;
+}
+.entry .remove:hover { color: var(--danger); }
+.add-btn {
+  display:block; width:100%; padding:10px; border-radius:8px; border:1px dashed var(--border);
+  background:none; color: var(--accent); font-weight:600; cursor:pointer; font-size:0.88rem;
+}
+.submit-btn {
+  display:block; width:100%; padding:14px; border-radius:8px; border:none;
+  background: var(--accent); color: var(--accent-ink); font-size:1rem; font-weight:700; cursor:pointer;
+  margin-top: 4px;
+}
+.submit-btn:disabled { opacity:0.55; cursor:default; }
+.status { text-align:center; padding: 12px 4px; font-size:0.88rem; color: var(--muted); min-height:1.2em; }
+.done { text-align:center; padding: 60px 20px; }
+.done h2 { margin-bottom:8px; }
+.otro-wrap { margin-top:8px; display:none; }
+.otro-wrap.open { display:block; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+
+  <h1>Relevamiento de Consultas y Reportes SAP por Sector</h1>
+  <p class="intro">Este relevamiento junta las consultas, layouts, comunicaciones e informes de Excel que usás hoy en SAP. Completá lo que corresponda en cada bloque — podés agregar tantos ítems como necesites, sin límite. Si tenés capturas de pantalla de layouts para mostrar, mandalas por mail aparte.</p>
+
+  <div class="card">
+    <div class="field">
+      <label>Usuario de SAP</label>
+      <input type="text" id="usuario" placeholder="Si no tenés, poné NA">
+    </div>
+    <div class="field">
+      <label>Sector/Área</label>
+      <select id="sector">
+        <option value="">Seleccioná...</option>
+        <option>Finanzas/Proveedores</option>
+        <option>Compras</option>
+        <option>Cuentas Corrientes</option>
+        <option>Comercial</option>
+        <option>Contabilidad</option>
+        <option value="__otro">Otro</option>
+      </select>
+      <div class="otro-wrap" id="otroWrap">
+        <input type="text" id="otroTexto" placeholder="Especificá tu sector">
+      </div>
+    </div>
+    <div class="field">
+      <label>Rol/Cargo</label>
+      <input type="text" id="rol">
+    </div>
+  </div>
+
+  <div class="card" id="block-query">
+    <div class="block-title">Consultas - Queries utilizadas</div>
+    <div class="block-desc">Un renglón por cada consulta que uses en SAP.</div>
+    <div class="gate">
+      <button type="button" data-block="query" data-val="si">Sí, uso Queries</button>
+      <button type="button" data-block="query" data-val="no" class="active">No uso</button>
+    </div>
+    <div class="entries" id="entries-query"></div>
+    <button type="button" class="add-btn" id="add-query" style="display:none;">+ Agregar otra Query</button>
+  </div>
+
+  <div class="card" id="block-layout">
+    <div class="block-title">Layouts - Templates de descarga</div>
+    <div class="block-desc">Un layout es una vista guardada de un reporte de SAP (columnas, orden y filtros que dejaste armados).</div>
+    <div class="gate">
+      <button type="button" data-block="layout" data-val="si">Sí, uso Layouts</button>
+      <button type="button" data-block="layout" data-val="no" class="active">No uso</button>
+    </div>
+    <div class="entries" id="entries-layout"></div>
+    <button type="button" class="add-btn" id="add-layout" style="display:none;">+ Agregar otro Layout</button>
+  </div>
+
+  <div class="card" id="block-comunicacion">
+    <div class="block-title">Comunicaciones relacionadas con acciones de SAP (por fuera de SAP)</div>
+    <div class="block-desc">Ejemplo: Mail/Whatsapp - Aviso de recepción de mercadería/prestación de servicio para pago a proveedores.</div>
+    <div class="gate">
+      <button type="button" data-block="comunicacion" data-val="si">Sí, realizo</button>
+      <button type="button" data-block="comunicacion" data-val="no" class="active">No realizo</button>
+    </div>
+    <div class="entries" id="entries-comunicacion"></div>
+    <button type="button" class="add-btn" id="add-comunicacion" style="display:none;">+ Agregar otra comunicación</button>
+  </div>
+
+  <div class="card" id="block-informe">
+    <div class="block-title">Análisis de información/modificación de reportes en Excel basados en descargas de SAP</div>
+    <div class="block-desc">Ejemplo: Artículos en stock - Para ejecución de conteo de inventario - Se borra la columna stock para hacer conteo ciego.</div>
+    <div class="gate">
+      <button type="button" data-block="informe" data-val="si">Sí, realizo</button>
+      <button type="button" data-block="informe" data-val="no" class="active">No realizo</button>
+    </div>
+    <div class="entries" id="entries-informe"></div>
+    <button type="button" class="add-btn" id="add-informe" style="display:none;">+ Agregar otro informe</button>
+  </div>
+
+  <div class="card">
+    <div class="field">
+      <label>Oportunidades de mejora</label>
+      <div class="help" style="margin-top:0;margin-bottom:8px;">Agregá sugerencias o comentarios relacionados con la operativa de trabajo en SAP (opcional).</div>
+      <textarea id="mejora"></textarea>
+    </div>
+  </div>
+
+  <button type="button" class="submit-btn" id="submitBtn">Enviar</button>
+  <div class="status" id="status"></div>
+
+</div>
+
+<div class="wrap done" id="doneScreen" style="display:none;">
+  <h2>¡Gracias por tu tiempo!</h2>
+  <p>La información que brindaste nos es de gran ayuda para poder mejorar nuestros procesos.</p>
+  <p id="summaryText" style="color:var(--muted);"></p>
+</div>
+
+<script>
+const FORM_ACTION = 'https://docs.google.com/forms/d/e/1FAIpQLSdf6mGnUF5Fk_nxhYvubB4VR9syR8dH1ESzwi-OPl2wB7SUaw/formResponse';
+const ENTRY = {
+  usuario: 'entry.1710349789',
+  sector: 'entry.96550867',
+  rol: 'entry.82316091',
+  tipo: 'entry.115755286',
+  campo1: 'entry.1962294499',
+  campo2: 'entry.1443651162'
+};
+
+const BLOCKS = {
+  query: { tipo: 'Query', fields: [
+    {key:'campo1', label:'Nombre de la Consulta y Categoría de Consulta'},
+    {key:'campo2', label:'¿Para qué utilizás esta Query?'}
+  ]},
+  layout: { tipo: 'Layout', fields: [
+    {key:'campo1', label:'Ventana/Documento – Nombre o Identificación'},
+    {key:'campo2', label:'¿Para qué se usa?'}
+  ]},
+  comunicacion: { tipo: 'Comunicación', fields: [
+    {key:'campo1', label:'Vía de comunicación – Qué se comunica'}
+  ]},
+  informe: { tipo: 'Informe', fields: [
+    {key:'campo1', label:'Informe – Aplicación – Acción'}
+  ]}
+};
+
+const state = {};
+Object.keys(BLOCKS).forEach(b => state[b] = { active:false, entries: [] });
+
+function makeEntryId(){ return 'e' + Math.random().toString(36).slice(2,9); }
+
+function renderBlock(blockKey) {
+  const container = document.getElementById('entries-' + blockKey);
+  container.innerHTML = '';
+  state[blockKey].entries.forEach(entry => {
+    const div = document.createElement('div');
+    div.className = 'entry';
+    let html = `<button type="button" class="remove" data-remove="${entry.id}" aria-label="Quitar">×</button>`;
+    BLOCKS[blockKey].fields.forEach(f => {
+      const val = (entry[f.key] || '').replace(/</g,'&lt;');
+      html += `<div class="field"><label>${f.label}</label><textarea data-entry="${entry.id}" data-field="${f.key}">${val}</textarea></div>`;
+    });
+    div.innerHTML = html;
+    container.appendChild(div);
+  });
+  container.querySelectorAll('textarea').forEach(t => {
+    t.addEventListener('input', e => {
+      const id = e.target.getAttribute('data-entry');
+      const field = e.target.getAttribute('data-field');
+      const entry = state[blockKey].entries.find(x => x.id === id);
+      if (entry) entry[field] = e.target.value;
+    });
+  });
+  container.querySelectorAll('[data-remove]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-remove');
+      state[blockKey].entries = state[blockKey].entries.filter(x => x.id !== id);
+      renderBlock(blockKey);
+    });
+  });
+}
+
+function addEntry(blockKey) {
+  const entry = { id: makeEntryId() };
+  BLOCKS[blockKey].fields.forEach(f => entry[f.key] = '');
+  state[blockKey].entries.push(entry);
+  renderBlock(blockKey);
+}
+
+Object.keys(BLOCKS).forEach(blockKey => {
+  document.getElementById('add-' + blockKey).addEventListener('click', () => addEntry(blockKey));
+});
+
+document.querySelectorAll('.gate button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const blockKey = btn.getAttribute('data-block');
+    const val = btn.getAttribute('data-val');
+    const siBtn = document.querySelector(`.gate button[data-block="${blockKey}"][data-val="si"]`);
+    const noBtn = document.querySelector(`.gate button[data-block="${blockKey}"][data-val="no"]`);
+    siBtn.classList.toggle('active', val === 'si');
+    noBtn.classList.toggle('active', val === 'no');
+    const entriesDiv = document.getElementById('entries-' + blockKey);
+    const addBtn = document.getElementById('add-' + blockKey);
+    if (val === 'si') {
+      state[blockKey].active = true;
+      entriesDiv.classList.add('open');
+      addBtn.style.display = 'block';
+      if (state[blockKey].entries.length === 0) addEntry(blockKey);
+    } else {
+      state[blockKey].active = false;
+      entriesDiv.classList.remove('open');
+      addBtn.style.display = 'none';
+      state[blockKey].entries = [];
+      renderBlock(blockKey);
+    }
+  });
+});
+
+document.getElementById('sector').addEventListener('change', e => {
+  const wrap = document.getElementById('otroWrap');
+  wrap.classList.toggle('open', e.target.value === '__otro');
+});
+
+function submitRow(row) {
+  return new Promise(resolve => {
+    const iframeName = 'hf_' + Math.random().toString(36).slice(2);
+    const iframe = document.createElement('iframe');
+    iframe.name = iframeName;
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+    const form = document.createElement('form');
+    form.action = FORM_ACTION;
+    form.method = 'POST';
+    form.target = iframeName;
+    Object.entries(row).forEach(([k,v]) => {
+      const inp = document.createElement('input');
+      inp.type = 'hidden'; inp.name = k; inp.value = v;
+      form.appendChild(inp);
+    });
+    document.body.appendChild(form);
+    try { form.submit(); } catch(e) {}
+    setTimeout(() => { form.remove(); iframe.remove(); resolve(); }, 900);
+  });
+}
+
+document.getElementById('submitBtn').addEventListener('click', async () => {
+  const usuario = document.getElementById('usuario').value.trim();
+  const rol = document.getElementById('rol').value.trim();
+  const sectorSel = document.getElementById('sector').value;
+  const otroTexto = document.getElementById('otroTexto').value.trim();
+  const statusEl = document.getElementById('status');
+
+  if (!usuario) { statusEl.textContent = 'Falta completar Usuario de SAP.'; return; }
+  if (!sectorSel) { statusEl.textContent = 'Falta seleccionar Sector/Área.'; return; }
+  if (sectorSel === '__otro' && !otroTexto) { statusEl.textContent = 'Especificá tu sector.'; return; }
+  if (!rol) { statusEl.textContent = 'Falta completar Rol/Cargo.'; return; }
+
+  const sector = sectorSel === '__otro' ? otroTexto : sectorSel;
+
+  const rows = [];
+  Object.keys(BLOCKS).forEach(blockKey => {
+    if (!state[blockKey].active) return;
+    state[blockKey].entries.forEach(entry => {
+      const campo1 = (entry.campo1 || '').trim();
+      const campo2 = (entry.campo2 || '').trim();
+      if (!campo1 && !campo2) return;
+      rows.push({
+        [ENTRY.usuario]: usuario,
+        [ENTRY.sector]: sector,
+        [ENTRY.rol]: rol,
+        [ENTRY.tipo]: BLOCKS[blockKey].tipo,
+        [ENTRY.campo1]: campo1,
+        [ENTRY.campo2]: campo2
+      });
+    });
+  });
+
+  const mejora = document.getElementById('mejora').value.trim();
+  if (mejora) {
+    rows.push({
+      [ENTRY.usuario]: usuario,
+      [ENTRY.sector]: sector,
+      [ENTRY.rol]: rol,
+      [ENTRY.tipo]: 'Oportunidad de mejora',
+      [ENTRY.campo1]: mejora,
+      [ENTRY.campo2]: ''
+    });
+  }
+
+  if (rows.length === 0) {
+    rows.push({
+      [ENTRY.usuario]: usuario,
+      [ENTRY.sector]: sector,
+      [ENTRY.rol]: rol,
+      [ENTRY.tipo]: 'Sin items reportados',
+      [ENTRY.campo1]: '',
+      [ENTRY.campo2]: ''
+    });
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+
+  for (let i = 0; i < rows.length; i++) {
+    statusEl.textContent = `Enviando ${i+1} de ${rows.length}...`;
+    await submitRow(rows[i]);
+  }
+
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('doneScreen').style.display = 'block';
+  document.getElementById('summaryText').textContent = `Se registraron ${rows.length} ítem(s).`;
+});
+</script>
+</body>
+</html>
