@@ -94,6 +94,7 @@ input:focus, select:focus, textarea:focus, button:focus {
   font-size:0.78rem; cursor:pointer; text-decoration:none; font-family:inherit;
 }
 .attach-link:hover { border-color: var(--accent); color: var(--accent); }
+.attach-link.sent { border-color: var(--accent); color: var(--accent); background: transparent; }
 .attach-hint { color: var(--muted); font-size:0.8rem; margin: 10px 0 2px; line-height:1.4; }
 </style>
 </head>
@@ -212,25 +213,36 @@ const ENTRY = {
   rol: 'entry.82316091',
   tipo: 'entry.115755286',
   campo1: 'entry.1962294499',
-  campo2: 'entry.1443651162'
+  campo2: 'entry.1443651162',
+  mailEnviado: 'entry.352761350'
 };
 
 const BLOCKS = {
   query: { tipo: 'Query', mailLabel: 'Adjuntar captura de pantalla de las ventanas utilizadas', fields: [
-    {key:'campo1', label:'Nombre de la Consulta y Categoría de Consulta'},
-    {key:'campo2', label:'¿Para qué utilizás esta Query?'}
+    {key:'nombre', label:'Nombre de la consulta', target:'campo1'},
+    {key:'categoria', label:'Categoría de consulta', target:'campo1'},
+    {key:'paraque', label:'¿Para qué utilizás esta Query?', target:'campo2'}
   ]},
   layout: { tipo: 'Layout', mailLabel: 'Adjuntar captura de pantalla de las ventanas utilizadas', fields: [
-    {key:'campo1', label:'Ventana/Documento – Nombre o Identificación'},
-    {key:'campo2', label:'¿Para qué se usa?'}
+    {key:'ventana', label:'Ventana/Documento', target:'campo1'},
+    {key:'nombre', label:'Nombre o identificación', target:'campo1'},
+    {key:'paraque', label:'¿Para qué se usa?', target:'campo2'}
   ]},
   comunicacion: { tipo: 'Comunicación', mailLabel: 'Adjuntar ejemplo', fields: [
-    {key:'campo1', label:'Vía de comunicación – Qué se comunica'}
+    {key:'campo1', label:'Vía de comunicación – Qué se comunica', target:'campo1'}
   ]},
   informe: { tipo: 'Informe', mailLabel: 'Adjuntar ejemplo', fields: [
-    {key:'campo1', label:'Informe – Aplicación – Acción'}
+    {key:'campo1', label:'Informe – Aplicación – Acción', target:'campo1'}
   ]}
 };
+
+function joinedCampo(blockKey, entry, target) {
+  return BLOCKS[blockKey].fields
+    .filter(f => f.target === target)
+    .map(f => (entry[f.key] || '').trim())
+    .filter(Boolean)
+    .join(' – ');
+}
 
 const state = {};
 Object.keys(BLOCKS).forEach(b => state[b] = { active:false, entries: [] });
@@ -270,20 +282,28 @@ function renderBlock(blockKey) {
     });
   });
   container.querySelectorAll('.mail-link').forEach(btn => {
+    const refEntry = state[blockKey].entries.find(x => x.id === btn.getAttribute('data-entry'));
+    if (refEntry && refEntry.mailSent) {
+      btn.textContent = '✓ Mail marcado como enviado';
+      btn.classList.add('sent');
+    }
     btn.addEventListener('click', () => {
       const id = btn.getAttribute('data-entry');
       const bKey = btn.getAttribute('data-block');
       const entry = state[bKey].entries.find(x => x.id === id);
       const usuario = (document.getElementById('usuario').value || 'Usuario').trim();
-      const referencia = (entry && entry.campo1 ? entry.campo1 : '').trim() || 'sin descripción';
+      const referencia = (entry ? joinedCampo(bKey, entry, 'campo1') : '') || 'sin descripción';
       const subject = encodeURIComponent(`Adjunto SAP - ${usuario} - ${referencia}`);
+      if (entry) entry.mailSent = true;
+      btn.textContent = '✓ Mail marcado como enviado';
+      btn.classList.add('sent');
       window.location.href = `mailto:${DEST_EMAIL}?subject=${subject}`;
     });
   });
 }
 
 function addEntry(blockKey) {
-  const entry = { id: makeEntryId() };
+  const entry = { id: makeEntryId(), mailSent: false };
   BLOCKS[blockKey].fields.forEach(f => entry[f.key] = '');
   state[blockKey].entries.push(entry);
   renderBlock(blockKey);
@@ -363,8 +383,8 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
   Object.keys(BLOCKS).forEach(blockKey => {
     if (!state[blockKey].active) return;
     state[blockKey].entries.forEach(entry => {
-      const campo1 = (entry.campo1 || '').trim();
-      const campo2 = (entry.campo2 || '').trim();
+      const campo1 = joinedCampo(blockKey, entry, 'campo1');
+      const campo2 = joinedCampo(blockKey, entry, 'campo2');
       if (!campo1 && !campo2) return;
       rows.push({
         [ENTRY.usuario]: usuario,
@@ -372,7 +392,8 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
         [ENTRY.rol]: rol,
         [ENTRY.tipo]: BLOCKS[blockKey].tipo,
         [ENTRY.campo1]: campo1,
-        [ENTRY.campo2]: campo2
+        [ENTRY.campo2]: campo2,
+        [ENTRY.mailEnviado]: entry.mailSent ? 'Sí' : ''
       });
     });
   });
