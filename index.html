@@ -142,7 +142,7 @@ input:focus, select:focus, textarea:focus, button:focus {
   <div class="card" id="block-query">
     <div class="block-title">Consultas - Queries utilizadas</div>
     <div class="block-desc">Un renglón por cada consulta que uses en SAP.</div>
-    <div class="attach-hint">💡 Si querés adjuntar una captura o archivo a algún ítem, cada uno tiene botones para subirlo a Drive o avisarnos por mail.</div>
+    <div class="attach-hint">💡 Si querés adjuntar una captura o archivo a algún ítem, cada uno tiene un botón que te arma el mail con el asunto ya armado — adjuntale el archivo ahí.</div>
     <div class="gate">
       <button type="button" data-block="query" data-val="si">Sí, uso Queries</button>
       <button type="button" data-block="query" data-val="no" class="active">No uso</button>
@@ -205,7 +205,6 @@ input:focus, select:focus, textarea:focus, button:focus {
 
 <script>
 const FORM_ACTION = 'https://docs.google.com/forms/d/e/1FAIpQLSdf6mGnUF5Fk_nxhYvubB4VR9syR8dH1ESzwi-OPl2wB7SUaw/formResponse';
-const DRIVE_LINK = 'https://drive.google.com/drive/folders/1I3Wj0rxeOHvGb7_r6CF5_qPDaDdJA8Wan77gnTKDFE4GMLYBj29q_QLIV0VJ6oSN1II8g1Ij';
 const DEST_EMAIL = 'vpsuarez@gmail.com';
 const ENTRY = {
   usuario: 'entry.1710349789',
@@ -217,18 +216,18 @@ const ENTRY = {
 };
 
 const BLOCKS = {
-  query: { tipo: 'Query', fields: [
+  query: { tipo: 'Query', mailLabel: 'Adjuntar captura de pantalla de las ventanas utilizadas', fields: [
     {key:'campo1', label:'Nombre de la Consulta y Categoría de Consulta'},
     {key:'campo2', label:'¿Para qué utilizás esta Query?'}
   ]},
-  layout: { tipo: 'Layout', fields: [
+  layout: { tipo: 'Layout', mailLabel: 'Adjuntar captura de pantalla de las ventanas utilizadas', fields: [
     {key:'campo1', label:'Ventana/Documento – Nombre o Identificación'},
     {key:'campo2', label:'¿Para qué se usa?'}
   ]},
-  comunicacion: { tipo: 'Comunicación', fields: [
+  comunicacion: { tipo: 'Comunicación', mailLabel: 'Adjuntar ejemplo', fields: [
     {key:'campo1', label:'Vía de comunicación – Qué se comunica'}
   ]},
-  informe: { tipo: 'Informe', fields: [
+  informe: { tipo: 'Informe', mailLabel: 'Adjuntar ejemplo', fields: [
     {key:'campo1', label:'Informe – Aplicación – Acción'}
   ]}
 };
@@ -250,8 +249,7 @@ function renderBlock(blockKey) {
       html += `<div class="field"><label>${f.label}</label><textarea data-entry="${entry.id}" data-field="${f.key}">${val}</textarea></div>`;
     });
     html += `<div class="attach-row">
-      <a class="attach-link" href="${DRIVE_LINK}" target="_blank" rel="noopener">📎 Subir a Drive</a>
-      <button type="button" class="attach-link mail-link" data-entry="${entry.id}" data-block="${blockKey}">✉️ Avisar por mail</button>
+      <button type="button" class="attach-link mail-link" data-entry="${entry.id}" data-block="${blockKey}">✉️ ${BLOCKS[blockKey].mailLabel}</button>
     </div>`;
     div.innerHTML = html;
     container.appendChild(div);
